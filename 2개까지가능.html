@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>이미지 슬라이드 생성기</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    .slide-group {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 15px;
+    }
+    .slide-group h3 {
+      margin-top: 0;
+    }
+    .image-input {
+      display: block;
+      margin-bottom: 5px;
+    }
+    #codeResult {
+      white-space: pre-wrap;
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 30px;
+      display: none;
+      font-family: Consolas, monospace;
+    }
+    #convertBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+
+    .input-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      column-gap: 100px; /* ✅ 이게 핵심: 간격 넓히기 */
+      margin-bottom: 10px;
+    }
+
+    .input-area input {
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      transition: border-color 0.3s, box-shadow 0.3s;
+      height: 20px; /* ✅ 고정 높이로 두 인풋 동일하게 */
+    }
+
+    .input-area input:focus {
+      border-color: #4A90E2;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+
+    .image-input {
+      flex: 3; /* ✅ 이미지 URL */
+      min-width: 0;
+    }
+
+    .caption-input {
+      flex: 7; /* ✅ 캡션 */
+      min-width: 0;
+    }
+
+    .slide-count-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .slide-count-buttons button {
+      flex: 1;                          /* ✅ 자동 너비 확장 */
+      min-width: 80px;                 /* ✅ 최소 너비 보장 */
+      max-width: 120px;                /* ✅ 너무 커지지 않도록 */
+      padding: 10px 16px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .slide-count-buttons button:hover {
+      background-color: #eee;
+      border-color: #999;
+    }
+
+    .slide-count-buttons button.active {
+      background-color: #4A90E2;
+      color: #fff;
+      border-color: #4A90E2;
+    }
+
+    .slide-group button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #000000;              /* ✅ 글자색 */
+      background-color: #ececec;   /* ✅ 연한 파란 배경 */
+      border: none;                /* ✅ 테두리 제거 */
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .slide-group button:hover {
+      background-color: #d4d4d4;   /* ✅ 호버 시 배경만 살짝 진해짐 */
+    }
+
+    #convertBtn {
+      display: block;              /* ✅ 블록 요소로 전환 */
+      margin: 30px auto 0;         /* ✅ 중앙 정렬 (auto) */
+      width: 100%;                  /* ✅ 전체의 1/3 너비 */
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background-color: #f87c6e;   /* ✅ 빨간 배경 */
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    #convertBtn:hover {
+      background-color: #C0392B;   /* ✅ 더 진한 빨강 (호버 시) */
+    }
+
+    #convertBtn:active {
+      transform: scale(0.97);      /* ✅ 클릭 시 살짝 눌림 효과 */
+    }
+
+  </style>
+</head>
+
+<body>
+  <h2 id="slideTitle" style="cursor:pointer">이미지 슬라이드 생성기</h2>
+    <div id="slideCountButtons" class="slide-count-buttons">
+      <button data-count="1">1개</button>
+      <button data-count="2">2개</button>
+      <button data-count="3">3개</button>
+      <button data-count="4">4개</button>
+    </div>
+
+  <div id="slideContainer"></div>
+
+  <button id="convertBtn">코드 변환</button>
+
+  <div id="codeResult"></div>
+  <button id="copyBtn" style="display: none; margin-top: 10px;">전체 복사</button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const slideCountButtons = document.querySelectorAll("#slideCountButtons button");
+
+    slideCountButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        // 버튼 스타일 초기화
+        slideCountButtons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        const count = parseInt(button.dataset.count);
+        generateSlideGroups(count); // 선택된 숫자만큼 슬라이드 생성
+        
+      });
+    });
+
+    document.querySelector('button[data-count="1"]').classList.add("active");
+      generateSlideGroups(1);
+    });
+
+    function generateSlideGroups(targetCount, reset = false) {
+      const container = document.getElementById("slideContainer");
+
+      // 초기화 모드면 전체 비우기
+      if (reset) {
+        container.innerHTML = "";
+      }
+
+      const currentCount = container.querySelectorAll(".slide-group").length;
+
+      // 슬라이드 줄이기
+      if (targetCount < currentCount) {
+        for (let i = currentCount; i > targetCount; i--) {
+          const group = document.getElementById(`slide-group-${i}`);
+          if (group) group.remove();
+        }
+        return;
+      }
+
+      // 슬라이드 추가
+      for (let i = currentCount + 1; i <= targetCount; i++) {
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "slide-group";
+        groupDiv.id = `slide-group-${i}`;
+
+        const title = document.createElement("h3");
+        title.textContent = `슬라이드 ${i}`;
+        groupDiv.appendChild(title);
+
+        const inputArea = document.createElement("div");
+        inputArea.className = "input-area";
+
+        for (let j = 0; j < 5; j++) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "input-row";
+
+          const urlInput = document.createElement("input");
+          urlInput.type = "text";
+          urlInput.placeholder = "이미지 URL 입력";
+          urlInput.className = "image-input";
+
+          const captionInput = document.createElement("input");
+          captionInput.type = "text";
+          captionInput.placeholder = "캡션 입력";
+          captionInput.className = "caption-input";
+
+          wrapper.appendChild(urlInput);
+          wrapper.appendChild(captionInput);
+          inputArea.appendChild(wrapper);
+        }
+
+        const addButton = document.createElement("button");
+        addButton.textContent = "이미지 추가";
+        addButton.type = "button";
+        addButton.onclick = () => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "input-row";
+
+          const newUrlInput = document.createElement("input");
+          newUrlInput.type = "text";
+          newUrlInput.placeholder = "이미지 URL 입력";
+          newUrlInput.className = "image-input";
+
+          const newCaptionInput = document.createElement("input");
+          newCaptionInput.type = "text";
+          newCaptionInput.placeholder = "캡션 입력";
+          newCaptionInput.className = "caption-input";
+
+          wrapper.appendChild(newUrlInput);
+          wrapper.appendChild(newCaptionInput);
+          inputArea.appendChild(wrapper);
+        };
+
+        groupDiv.appendChild(inputArea);
+        groupDiv.appendChild(addButton);
+        container.appendChild(groupDiv);
+      }
+    }
+
+
+    document.getElementById("slideTitle").addEventListener("click", () => {
+      generateSlideGroups(1, true); // 초기화 모드로 1개 슬라이드
+    });
+
+    generateSlideGroups(); // 초기화
+
+    convertBtn.addEventListener("click", () => {
+        const activeButton = document.querySelector("#slideCountButtons button.active");
+        const slideCount = parseInt(activeButton.dataset.count);
+        let allSliderHTML = "";             // 각 슬라이드 HTML 누적
+        let allPreviewData = [];           // 각 슬라이드의 image+caption 데이터 배열
+        let allScriptHTML = "";
+        let basicHTML = "";
+        let lastHTML = "";
+        
+        for (let i = 1; i <= slideCount; i++) {
+        const imageInputs = document.querySelectorAll(`#slide-group-${i} .image-input`);
+        const captionInputs = document.querySelectorAll(`#slide-group-${i} .caption-input`);
+
+        const imageUrls = Array.from(imageInputs).map(input => input.value.trim());
+        const captions = Array.from(captionInputs).map(input => input.value.trim());
+
+        const validImageUrls = imageUrls.filter(url => url !== "");
+        const validImageCount = validImageUrls.length;
+
+        const mainImage = imageUrls[0] || "예시 이미지 주소.jpg";
+        const slideDataArray = [];
+        let previewImagesHTML = "";
+
+        imageUrls.forEach((url, idx) => {
+            if (!url) return;
+            const caption = captions[idx] || "캡션 예시입니다.";
+            slideDataArray.push(`{src: "${url}", caption: "${caption}"}`);
+            previewImagesHTML += `<img src="${url}" alt="미리보기 ${idx + 1}" onclick="changeImage(${i}, ${idx})"${idx === 0 ? ' class="active-preview"' : ''}>\n`;
+        });
+
+        allPreviewData.push(`[${slideDataArray.join(",\n")}]`);
+
+        basicHTML = `
+          <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style type="text/css">.slider-container {
+              position: relative;
+              width: 90%;
+              max-width: 800px;
+              margin: auto;
+              overflow: hidden;
+              background-color: black;
+              margin-bottom: 40px;
+            }
+
+            .main-image {
+              width: 100% !important;
+              height: auto;
+              object-fit: contain;
+            }
+
+            .slide-number {
+              position: absolute;
+              top: 10px;
+              left: 10px;
+              color: white;
+              font-size: 18px;
+              background-color: rgba(0, 0, 0, 0.5);
+              padding: 5px 10px;
+              border-radius: 5px;
+            }
+
+            .preview-images {
+              display: flex;
+              justify-content: center;
+              margin-top: 10px;
+              overflow-x: auto;
+              padding-bottom: 10px;
+            }
+
+            .preview-images img {
+              width: 80px;
+              height: auto;
+              margin: 0 5px;
+              cursor: pointer;
+              opacity: 0.6;
+              transition: opacity 0.3s;
+            }
+
+            .preview-images img:hover {
+              opacity: 1;
+            }
+
+            .active-preview {
+              border: 2px solid #fff;
+            }
+
+            .caption {
+              text-align: center;
+              color: white;
+              font-size: 18px;
+              margin-top: 10px;
+            }
+
+            .prev, .next {
+              position: absolute;
+              top: 50%;
+              transform: translateY(-50%);
+              background-color: rgba(0, 0, 0, 0.5);
+              color: white;
+              padding: 10px;
+              border: none;
+              cursor: pointer;
+              font-size: 18px;
+              z-index: 1;
+            }
+
+            .prev { left: 10px; }
+            .next { right: 10px; }
+            </style>
+        `
+        
+        allSliderHTML += `
+            <div class="slider-container" id="slider${i}">
+            <div class="slide-number" id="slideNumber${i}">1 / ${validImageCount}</div>
+            <img id="mainImage${i}" class="main-image" src="${mainImage}" alt="메인 이미지">
+            <div class="preview-images">
+                ${previewImagesHTML.trim()}
+            </div>
+            <div class="caption" id="caption${i}">${captions[0] || "캡션 예시입니다."}</div>
+            <button class="prev" onclick="moveSlide(${i}, -1)">&#10094;</button>
+            <button class="next" onclick="moveSlide(${i}, 1)">&#10095;</button>
+            </div>\n `;
+
+        let allImageVarDeclarations = "";
+        for (let i = 1; i <= slideCount; i++) {
+          const imageInputs = document.querySelectorAll(`#slide-group-${i} .image-input`);
+          const captionInputs = document.querySelectorAll(`#slide-group-${i} .caption-input`);
+
+          const imageUrls = Array.from(imageInputs).map(input => input.value.trim());
+          const captions = Array.from(captionInputs).map(input => input.value.trim());
+
+          const imageDataArray = [];
+
+          imageUrls.forEach((url, idx) => {
+            if (!url) return;
+            const caption = captions[idx] || "캡션 없음";
+            imageDataArray.push(`  {src: "${url}", caption: "${caption}"}`);
+          });
+
+          const imageVar = `var images${i} = [\n${imageDataArray.join(",\n")}\n];\n`;
+          allImageVarDeclarations += imageVar;
+        }      
+       
+       
+       allScriptHTML = allImageVarDeclarations;
+       const reptext1 = "`#slider${sliderNumber} .preview-images img`"
+       const reptext2 ="`slideNumber${sliderNumber}`"
+       
+       lastHTML = `
+         // 첫 번째 슬라이드의 현재 인덱스
+            var currentIndex1 = 0;
+
+            // 두 번째 슬라이드의 현재 인덱스
+            var currentIndex2 = 0;
+
+            // 메인 이미지를 변경하는 함수
+            function changeImage(sliderNumber, index) {
+                if (sliderNumber === 1) {
+                    currentIndex1 = index;
+                    document.getElementById('mainImage1').src = images1[currentIndex1].src;
+                    document.getElementById('caption1').textContent = images1[currentIndex1].caption;
+                    updateSlideNumber(1, currentIndex1, images1.length);
+                } else {
+                    currentIndex2 = index;
+                    document.getElementById('mainImage2').src = images2[currentIndex2].src;
+                    document.getElementById('caption2').textContent = images2[currentIndex2].caption;
+                    updateSlideNumber(2, currentIndex2, images2.length);
+                }
+
+                // 미리보기 이미지 활성화
+                updatePreview(sliderNumber, index);
+            }
+
+            // 미리보기 이미지 활성화 상태 변경 함수
+            function updatePreview(sliderNumber, index) {
+                var previews = document.querySelectorAll(${reptext1});
+                previews.forEach((preview, i) => {
+                    if (i === index) {
+                        preview.classList.add('active-preview');
+                    } else {
+                        preview.classList.remove('active-preview');
+                    }
+                });
+            }
+
+            // 슬라이드 번호 업데이트 함수
+            function updateSlideNumber(sliderNumber, currentIndex, totalSlides) {
+                var slideNumberElement = document.getElementById(${reptext2});
+                slideNumberElement.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+            }
+
+            // 슬라이드 이동 함수
+            function moveSlide(sliderNumber, step) {
+                if (sliderNumber === 1) {
+                    currentIndex1 += step;
+                    if (currentIndex1 < 0) currentIndex1 = images1.length - 1;
+                    if (currentIndex1 >= images1.length) currentIndex1 = 0;
+
+                    document.getElementById('mainImage1').src = images1[currentIndex1].src;
+                    document.getElementById('caption1').textContent = images1[currentIndex1].caption;
+                    updateSlideNumber(1, currentIndex1, images1.length);
+                } else {
+                    currentIndex2 += step;
+                    if (currentIndex2 < 0) currentIndex2 = images2.length - 1;
+                    if (currentIndex2 >= images2.length) currentIndex2 = 0;
+
+                    document.getElementById('mainImage2').src = images2[currentIndex2].src;
+                    document.getElementById('caption2').textContent = images2[currentIndex2].caption;
+                    updateSlideNumber(2, currentIndex2, images2.length);
+                }
+
+                // 미리보기 이미지 활성화
+                updatePreview(sliderNumber, sliderNumber === 1 ? currentIndex1 : currentIndex2);
+            }
+
+            // 자동 슬라이드를 설정 (각 슬라이드마다 3초마다 이동)
+            setInterval(function() {
+                moveSlide(1, 1);  // 1번 슬라이드로 이동
+            }, 5000);  // 5000ms = 5초마다 이동
+
+            setInterval(function() {
+                moveSlide(2, 1);  // 2번 슬라이드로 이동
+            }, 5000);  // 5000ms = 5초마다 이동
+   
+       `
+       
+     
+
+            console.log("allScriptHTML :" + allScriptHTML)
+        }
+         const htmlTemplate = basicHTML + allSliderHTML;
+         const reptext3 = "/script"
+           const fullScript = `
+          <script>
+            ${allScriptHTML}
+            ${lastHTML}
+          <${reptext3}>
+          `
+        // const htmlTemplate = allSliderHTML+allScriptHTML;
+  
+  
+        // const finalHTML = htmlTemplate + scriptTemplate;
+
+        // 보여주기
+        codeResult.innerText = htmlTemplate + fullScript;
+        codeResult.style.display = "block";
+
+        // 복사 버튼 표시
+        const copyBtn = document.getElementById("copyBtn");
+        copyBtn.style.display = "inline-block";
+
+        // 복사 기능 연결
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(codeResult.innerText).then(() => {
+            copyBtn.textContent = "복사 완료!";
+            setTimeout(() => {
+              copyBtn.textContent = "전체 복사";
+            }, 1500);
+          }).catch(err => {
+            alert("복사에 실패했습니다: " + err);
+          });
+        };
+    });
+    
+    // const copyBtn = document.getElementById("copyBtn");
+    // copyBtn.style.display = "inline-block"; // 코드 생성 시 버튼 표시
+    // copyBtn.onclick = () => {
+    //   const text = codeResult.innerText;
+    //   navigator.clipboard.writeText(text).then(() => {
+    //     copyBtn.textContent = "복사 완료!";
+    //     setTimeout(() => (copyBtn.textContent = "전체 복사"), 2000);
+    //   }).catch(err => {
+    //     alert("복사에 실패했습니다: " + err);
+    //   });
+    // };
+    
+    
+  </script>
+</body>
+</html>

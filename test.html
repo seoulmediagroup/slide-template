@@ -1,0 +1,191 @@
+
+          <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style type="text/css">.slider-container {
+              position: relative;
+              width: 90%;
+              max-width: 800px;
+              margin: auto;
+              overflow: hidden;
+              background-color: black;
+              margin-bottom: 40px;
+            }
+
+            .main-image {
+              width: 100% !important;
+              height: auto;
+              object-fit: contain;
+            }
+
+            .slide-number {
+              position: absolute;
+              top: 10px;
+              left: 10px;
+              color: white;
+              font-size: 18px;
+              background-color: rgba(0, 0, 0, 0.5);
+              padding: 5px 10px;
+              border-radius: 5px;
+            }
+
+            .preview-images {
+              display: flex;
+              justify-content: center;
+              margin-top: 10px;
+              overflow-x: auto;
+              padding-bottom: 10px;
+            }
+
+            .preview-images img {
+              width: 80px;
+              height: auto;
+              margin: 0 5px;
+              cursor: pointer;
+              opacity: 0.6;
+              transition: opacity 0.3s;
+            }
+
+            .preview-images img:hover {
+              opacity: 1;
+            }
+
+            .active-preview {
+              border: 2px solid #fff;
+            }
+
+            .caption {
+              text-align: center;
+              color: white;
+              font-size: 18px;
+              margin-top: 10px;
+            }
+
+            .prev, .next {
+              position: absolute;
+              top: 50%;
+              transform: translateY(-50%);
+              background-color: rgba(0, 0, 0, 0.5);
+              color: white;
+              padding: 10px;
+              border: none;
+              cursor: pointer;
+              font-size: 18px;
+              z-index: 1;
+            }
+
+            .prev { left: 10px; }
+            .next { right: 10px; }
+            </style>
+        
+            <div class="slider-container" id="slider1">
+            <div class="slide-number" id="slideNumber1">1 / 2</div>
+            <img id="mainImage1" class="main-image" src="/news/photo/202506/70112_400437_2925.jpg" alt="메인 이미지">
+            <div class="preview-images">
+                <img src="/news/photo/202506/70112_400437_2925.jpg" alt="미리보기 1" onclick="changeImage(1, 0)" class="active-preview">
+                <img src="/news/photo/202506/70112_400438_2926.jpg" alt="미리보기 2" onclick="changeImage(1, 1)">
+            </div>
+            <div class="caption" id="caption1">슬라이드1-1</div>
+                <button class="prev" onclick="moveSlide(1, -1)">&#10094;</button>
+                <button class="next" onclick="moveSlide(1, 1)">&#10095;</button>
+            </div>
+ 
+            <div class="slider-container" id="slider2">
+            <div class="slide-number" id="slideNumber2">1 / 2</div>
+            <img id="mainImage2" class="main-image" src="/news/photo/202506/70112_400443_1738.jpg" alt="메인 이미지">
+            <div class="preview-images">
+                <img src="/news/photo/202506/70112_400443_1738.jpg" alt="미리보기 1" onclick="changeImage(2, 0)" class="active-preview">
+<img src="/news/photo/202506/70112_400444_1740.jpg" alt="미리보기 2" onclick="changeImage(2, 1)">
+            </div>
+            <div class="caption" id="caption2">슬라이드2-1</div>
+            <button class="prev" onclick="moveSlide(2, -1)">&#10094;</button>
+            <button class="next" onclick="moveSlide(2, 1)">&#10095;</button>
+            </div>
+ 
+          <script>
+            var images1 = [
+  {src: "/news/photo/202506/70112_400437_2925.jpg", caption: "슬라이드1-1"},
+  {src: "/news/photo/202506/70112_400438_2926.jpg", caption: "슬라이드1-2"}
+];
+var images2 = [
+  {src: "/news/photo/202506/70112_400443_1738.jpg", caption: "슬라이드2-1"},
+  {src: "/news/photo/202506/70112_400444_1740.jpg", caption: "슬라이드2-2"}
+];
+
+            
+         // 첫 번째 슬라이드의 현재 인덱스
+            var currentIndex1 = 0;
+
+            // 두 번째 슬라이드의 현재 인덱스
+            var currentIndex2 = 0;
+
+            // 메인 이미지를 변경하는 함수
+            function changeImage(sliderNumber, index) {
+                if (sliderNumber === 1) {
+                    currentIndex1 = index;
+                    document.getElementById('mainImage1').src = images1[currentIndex1].src;
+                    document.getElementById('caption1').textContent = images1[currentIndex1].caption;
+                    updateSlideNumber(1, currentIndex1, images1.length);
+                } else {
+                    currentIndex2 = index;
+                    document.getElementById('mainImage2').src = images2[currentIndex2].src;
+                    document.getElementById('caption2').textContent = images2[currentIndex2].caption;
+                    updateSlideNumber(2, currentIndex2, images2.length);
+                }
+
+                // 미리보기 이미지 활성화
+                updatePreview(sliderNumber, index);
+            }
+
+            // 미리보기 이미지 활성화 상태 변경 함수
+            function updatePreview(sliderNumber, index) {
+                var previews = document.querySelectorAll(`#slider${sliderNumber} .preview-images img`);
+                previews.forEach((preview, i) => {
+                    if (i === index) {
+                        preview.classList.add('active-preview');
+                    } else {
+                        preview.classList.remove('active-preview');
+                    }
+                });
+            }
+
+            // 슬라이드 번호 업데이트 함수
+            function updateSlideNumber(sliderNumber, currentIndex, totalSlides) {
+                var slideNumberElement = document.getElementById(`slideNumber${sliderNumber}`);
+                slideNumberElement.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+            }
+
+            // 슬라이드 이동 함수
+            function moveSlide(sliderNumber, step) {
+                if (sliderNumber === 1) {
+                    currentIndex1 += step;
+                    if (currentIndex1 < 0) currentIndex1 = images1.length - 1;
+                    if (currentIndex1 >= images1.length) currentIndex1 = 0;
+
+                    document.getElementById('mainImage1').src = images1[currentIndex1].src;
+                    document.getElementById('caption1').textContent = images1[currentIndex1].caption;
+                    updateSlideNumber(1, currentIndex1, images1.length);
+                } else {
+                    currentIndex2 += step;
+                    if (currentIndex2 < 0) currentIndex2 = images2.length - 1;
+                    if (currentIndex2 >= images2.length) currentIndex2 = 0;
+
+                    document.getElementById('mainImage2').src = images2[currentIndex2].src;
+                    document.getElementById('caption2').textContent = images2[currentIndex2].caption;
+                    updateSlideNumber(2, currentIndex2, images2.length);
+                }
+
+                // 미리보기 이미지 활성화
+                updatePreview(sliderNumber, sliderNumber === 1 ? currentIndex1 : currentIndex2);
+            }
+
+            // 자동 슬라이드를 설정 (각 슬라이드마다 3초마다 이동)
+            setInterval(function() {
+                moveSlide(1, 1);  // 1번 슬라이드로 이동
+            }, 5000);  // 5000ms = 5초마다 이동
+
+            setInterval(function() {
+                moveSlide(2, 1);  // 2번 슬라이드로 이동
+            }, 5000);  // 5000ms = 5초마다 이동
+   
+       
+          /script
+          
