@@ -379,10 +379,10 @@
             <div class="slider-container" id="slider${i}">
             <div class="slide-number" id="slideNumber${i}">1 / ${validImageCount}</div>
             <img id="mainImage${i}" class="main-image" src="${mainImage}" alt="메인 이미지">
+            <div class="caption" id="caption${i}">${captions[0] || "캡션 예시입니다."}</div>
             <div class="preview-images">
                 ${previewImagesHTML.trim()}
             </div>
-            <div class="caption" id="caption${i}">${captions[0] || "캡션 예시입니다."}</div>
             <button class="prev" onclick="moveSlide(${i}, -1)">&#10094;</button>
             <button class="next" onclick="moveSlide(${i}, 1)">&#10095;</button>
             </div>\n `;
@@ -399,7 +399,7 @@
 
           imageUrls.forEach((url, idx) => {
             if (!url) return;
-            const caption = captions[idx] || "캡션 없음";
+            const caption = captions[idx] || "";
             imageDataArray.push(`  {src: "${url}", caption: "${caption}"}`);
           });
 
