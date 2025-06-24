@@ -139,6 +139,41 @@
       transform: scale(0.97);      /* ✅ 클릭 시 살짝 눌림 효과 */
     }
 
+    #codeResultWrapper {
+      position: relative;
+      margin-top: 30px;
+    }
+
+    #codeResult {
+      white-space: pre-wrap;
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      padding: 15px;
+      font-family: Consolas, monospace;
+      overflow-x: auto;
+    }
+
+    #copyBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #000;      /* ✅ 검정 배경 */
+      color: #fff;
+      border: none;
+      padding: 10px 16px;          /* ✅ 조금 더 크게 */
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #copyBtn:hover {
+      background-color: #333;
+    }
+
+
+
   </style>
 </head>
 
@@ -155,8 +190,10 @@
 
   <button id="convertBtn">코드 변환</button>
 
-  <div id="codeResult"></div>
-  <button id="copyBtn" style="display: none; margin-top: 10px;">전체 복사</button>
+  <div id="codeResultWrapper" style="position: relative; display: none;">
+    <div id="codeResult"></div>
+    <button id="copyBtn">전체 복사</button>
+  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -260,6 +297,8 @@
 
     document.getElementById("slideTitle").addEventListener("click", () => {
       generateSlideGroups(1, true); // 초기화 모드로 1개 슬라이드
+      document.getElementById("codeResult").innerText = "";
+      document.getElementById("codeResultWrapper").style.display = "none";
     });
 
     generateSlideGroups(); // 초기화
@@ -289,7 +328,7 @@
 
         imageUrls.forEach((url, idx) => {
             if (!url) return;
-            const caption = captions[idx] || "캡션 예시입니다.";
+            const caption = captions[idx] || "";
             slideDataArray.push(`{src: "${url}", caption: "${caption}"}`);
             previewImagesHTML += `<img src="${url}" alt="미리보기 ${idx + 1}" onclick="changeImage(${i}, ${idx})"${idx === 0 ? ' class="active-preview"' : ''}>\n`;
         });
@@ -379,7 +418,7 @@
             <div class="slider-container" id="slider${i}">
             <div class="slide-number" id="slideNumber${i}">1 / ${validImageCount}</div>
             <img id="mainImage${i}" class="main-image" src="${mainImage}" alt="메인 이미지">
-            <div class="caption" id="caption${i}">${captions[0] || "캡션 예시입니다."}</div>
+            <div class="caption" id="caption${i}">${captions[0] || ""}</div>
             <div class="preview-images">
                 ${previewImagesHTML.trim()}
             </div>
@@ -507,7 +546,7 @@
 
         // 복사 버튼 표시
         const copyBtn = document.getElementById("copyBtn");
-        copyBtn.style.display = "inline-block";
+        codeResultWrapper.style.display = "block";
 
         // 복사 기능 연결
         copyBtn.onclick = () => {
